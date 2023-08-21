@@ -1,21 +1,21 @@
 %macro nodup_check(lib=, in=, key=_all_,  path=, name=);
 %put --------------------------------------------------;
 %put nodup_check;
-%put d•¡ƒ`ƒFƒbƒN‚Æd•¡ƒf[ƒ^‚Ì’Šo;
-%put &=lib;		/*ƒ‰ƒCƒuƒ‰ƒŠQÆæ‚Ìw’èiÈ—ª‰Âj*/
-%put &=in;		/*ƒ`ƒFƒbƒN‘ÎÛƒf[ƒ^ƒZƒbƒg‚ğw’èiƒf[ƒ^ƒZƒbƒgƒIƒvƒVƒ‡ƒ“‚Ìw’è‰Âj*/
-%put &=key;		/*ƒ`ƒFƒbƒN‘ÎÛKEY‚ğw’èiŠù’è’l=_all_:‘S•Ï”j*/
-%put &=path;	/*ƒtƒ@ƒCƒ‹‚Ìo—Íæ‚ğw’èi––”ö‚ÌƒoƒbƒNƒXƒ‰ƒbƒVƒ…"\"‚Í•s—vj*/
-%put &=name;	/*ƒtƒ@ƒCƒ‹–¼‚ğw’è(ƒtƒ@ƒCƒ‹–¼.htmlAƒtƒ@ƒCƒ‹–¼.xlsx‚ªì¬‚³‚ê‚é)*/
+%put é‡è¤‡ãƒã‚§ãƒƒã‚¯ã¨é‡è¤‡ãƒ‡ãƒ¼ã‚¿ã®æŠ½å‡º;
+%put &=lib;		/*ãƒ©ã‚¤ãƒ–ãƒ©ãƒªå‚ç…§å…ˆã®æŒ‡å®šï¼ˆçœç•¥å¯ï¼‰*/
+%put &=in;		/*ãƒã‚§ãƒƒã‚¯å¯¾è±¡ãƒ‡ãƒ¼ã‚¿ã‚»ãƒƒãƒˆã‚’æŒ‡å®šï¼ˆãƒ‡ãƒ¼ã‚¿ã‚»ãƒƒãƒˆã‚ªãƒ—ã‚·ãƒ§ãƒ³ã®æŒ‡å®šå¯ï¼‰*/
+%put &=key;		/*ãƒã‚§ãƒƒã‚¯å¯¾è±¡KEYã‚’æŒ‡å®šï¼ˆæ—¢å®šå€¤=_all_:å…¨å¤‰æ•°ï¼‰*/
+%put &=path;	/*ãƒ•ã‚¡ã‚¤ãƒ«ã®å‡ºåŠ›å…ˆã‚’æŒ‡å®šï¼ˆæœ«å°¾ã®ãƒãƒƒã‚¯ã‚¹ãƒ©ãƒƒã‚·ãƒ¥"\"ã¯ä¸è¦ï¼‰*/
+%put &=name;	/*ãƒ•ã‚¡ã‚¤ãƒ«åã‚’æŒ‡å®š(ãƒ•ã‚¡ã‚¤ãƒ«å.htmlã€ãƒ•ã‚¡ã‚¤ãƒ«å.xlsxãŒä½œæˆã•ã‚Œã‚‹)*/
 %put --------------------------------------------------;
 
-	/*ƒtƒH[ƒ}ƒbƒgƒGƒ‰[‚ğ–h‚®*/
+	/*ãƒ•ã‚©ãƒ¼ãƒãƒƒãƒˆã‚¨ãƒ©ãƒ¼ã‚’é˜²ã*/
 	options nofmterr compress=yes;
 
-	/*ƒ[ƒJƒ‹ƒ}ƒNƒ•Ï”‚Ì’è‹`*/
+	/*ãƒ­ãƒ¼ã‚«ãƒ«ãƒã‚¯ãƒ­å¤‰æ•°ã®å®šç¾©*/
 	%local i num_indata num_dupdata;
 
-	/*ƒ‰ƒCƒuƒ‰ƒŠQÆ–¼‚Ìİ’è‚Æƒf[ƒ^‚Ì“Ç‚İ‚İ*/
+	/*ãƒ©ã‚¤ãƒ–ãƒ©ãƒªå‚ç…§åã®è¨­å®šã¨ãƒ‡ãƒ¼ã‚¿ã®èª­ã¿è¾¼ã¿*/
 	%if %length(%superq(lib)) > 0 %then %do;
 		libname lib &lib. access=readonly;
 		proc sort data=lib.&in. out=_nodup_check_data;
@@ -29,11 +29,11 @@
 		run;
 	%end;
 
-	/*“ü—Íƒf[ƒ^‚ÌƒŒƒR[ƒh”‚Ìæ“¾*/
+	/*å…¥åŠ›ãƒ‡ãƒ¼ã‚¿ã®ãƒ¬ã‚³ãƒ¼ãƒ‰æ•°ã®å–å¾—*/
 	%let num_indata = &sysnobs.;
-	%if &num_indata. = 0 %then %put WARNING:“ü—Íƒf[ƒ^ƒZƒbƒg‚Í‹ó‚Å‚·B;
+	%if &num_indata. = 0 %then %put WARNING:å…¥åŠ›ãƒ‡ãƒ¼ã‚¿ã‚»ãƒƒãƒˆã¯ç©ºã§ã™ã€‚;
 
-	/*•Ï”–¼‚Ìæ“¾*/
+	/*å¤‰æ•°åã®å–å¾—*/
 	data 
 		_nodup_check_cont_key(keep=&key.)
 		_nodup_check_cont_all
@@ -53,7 +53,7 @@
 		by varnum;
 	run;	
 
-	/*•Ï”‚Ìƒ[ƒJƒ‹ƒ}ƒNƒ•Ï”‰»*/
+	/*å¤‰æ•°ã®ãƒ­ãƒ¼ã‚«ãƒ«ãƒã‚¯ãƒ­å¤‰æ•°åŒ–*/
 	data _null_;
 		set _nodup_check_cont_key2;
 		call symputx("num_key", _n_, "L");
@@ -67,20 +67,20 @@
 		call symputx(cats("len", _n_), length,	"L");
 	run;
 
-	/*d•¡ƒf[ƒ^‚Ìo—Í*/
+	/*é‡è¤‡ãƒ‡ãƒ¼ã‚¿ã®å‡ºåŠ›*/
 	proc sort data=_nodup_check_data(keep=&key.) 
-									out=_nodup_check_nodup 
-									dupout=_nodup_check_dup
-									nodupkey;
+		out=_nodup_check_nodup 
+		dupout=_nodup_check_dup
+		nodupkey;
 		by &key.;
 	run;
 	
-	/*d•¡ƒf[ƒ^‚Ìd•¡íœ*/
+	/*é‡è¤‡ãƒ‡ãƒ¼ã‚¿ã®é‡è¤‡å‰Šé™¤*/
 	proc sort data=_nodup_check_dup nodupkey;
 		by &key.;
 	run;
 
-	/*_nodup_check_dup‚ÌOBS”‚É‚æ‚èğŒ•ªŠò*/
+	/*_nodup_check_dupã®OBSæ•°ã«ã‚ˆã‚Šæ¡ä»¶åˆ†å²*/
 	%if &sysnobs. > 0 %then %do;
 		data 
 			_nodup_check_data_all(drop=_sabun_var)
@@ -96,11 +96,11 @@
 			;
 
 			attrib
-				_dup_no 		length=8. 		label="d•¡No."
-				_dup_key		length=$10000.	label="d•¡ƒL["
-				_sabun_var		length=$10000.	label="·•ª‚Ì‚ ‚é•Ï”"
+				_dup_no 		length=8. 		label="é‡è¤‡No."
+				_dup_key		length=$10000.	label="é‡è¤‡ã‚­ãƒ¼"
+				_sabun_var		length=$10000.	label="å·®åˆ†ã®ã‚ã‚‹å¤‰æ•°"
 
-				/*RETAIN—p•Ï”*/
+				/*RETAINç”¨å¤‰æ•°*/
 				%do i = 1 %to &num_var.;
 					_&&var&i..
 					%if &&type&i.. = 1 %then %do;
@@ -126,19 +126,19 @@
 			by &key.;
 			if in1 and in2;
 
-			/*ƒ`ƒFƒbƒNƒL[‚Ìæ“¾*/
+			/*ãƒã‚§ãƒƒã‚¯ã‚­ãƒ¼ã®å–å¾—*/
 			_dup_key = strip("&key.");
 
-			/*d•¡ƒŒƒR[ƒh‚ÌƒƒO‚Ö‚Ìo—Í*/
+			/*é‡è¤‡ãƒ¬ã‚³ãƒ¼ãƒ‰ã®ãƒ­ã‚°ã¸ã®å‡ºåŠ›*/
 			_logout_cnt + 1;
-			if _logout_cnt <= 10 then put "WARNING:" _n_ +(-1) "ƒIƒuƒUƒx[ƒVƒ‡ƒ“–Ú‚ªd•¡‚µ‚Ä‚¢‚Ü‚·B" +1 (&key.)(=);
-			if _logout_cnt = 10 then put "WARNING:d•¡”‚ª10‚É’B‚µ‚½‚Ì‚ÅAƒƒO‚Ö‚Ìo—Í‚ğ~‚ß‚Ü‚·B";
+			if _logout_cnt <= 10 then put "WARNING:" _n_ +(-1) "ã‚ªãƒ–ã‚¶ãƒ™ãƒ¼ã‚·ãƒ§ãƒ³ç›®ãŒé‡è¤‡ã—ã¦ã„ã¾ã™ã€‚" +1 (&key.)(=);
+			if _logout_cnt = 10 then put "WARNING:é‡è¤‡æ•°ãŒ10ã«é”ã—ãŸã®ã§ã€ãƒ­ã‚°ã¸ã®å‡ºåŠ›ã‚’æ­¢ã‚ã¾ã™ã€‚";
 			
 			
-			/*d•¡No.‚Ìæ“¾*/
+			/*é‡è¤‡No.ã®å–å¾—*/
 			if first.&&key&num_key.. then _dup_no + 1;
 
-			/*·•ª‚Ì‚ ‚é•Ï”‚Ìæ“¾*/
+			/*å·®åˆ†ã®ã‚ã‚‹å¤‰æ•°ã®å–å¾—*/
 			if first.&&key&num_key.. then do;
 				call missing(of _sabun_var);
 				%do i = 1 %to &num_var.;
@@ -155,13 +155,13 @@
 				end;
 			%end;
 
-			/*o—Í*/
+			/*å‡ºåŠ›*/
 			output _nodup_check_data_all;
 			if last.&&key&num_key.. and not missing(_sabun_var) then output _nodup_check_sabun;
 
 		run;
 
-		/*·•ª‚Ì‚ ‚é•Ï”‚Ìæ“¾*/
+		/*å·®åˆ†ã®ã‚ã‚‹å¤‰æ•°ã®å–å¾—*/
 		data _nodup_check_data_all_fin;
 
 			format
@@ -178,45 +178,45 @@
 			if in1;
 		run;
 
-		/*d•¡ƒf[ƒ^‚ÌƒŒƒR[ƒh”‚Ìæ“¾*/
+		/*é‡è¤‡ãƒ‡ãƒ¼ã‚¿ã®ãƒ¬ã‚³ãƒ¼ãƒ‰æ•°ã®å–å¾—*/
 		%let num_dupdata = &sysnobs.;
 
-		/*•ª•z‚ÌWŒv*/
+		/*åˆ†å¸ƒã®é›†è¨ˆ*/
 		proc freq data = _nodup_check_data_all_fin noprint;
 			table _sabun_var / nocol norow nopercent out = _nodup_check_sabun_var_freq;
 		run;
 
-		/*®—*/
+		/*æ•´ç†*/
 		data _nodup_check_sabun_var_freq_fin;
-			attrib _dup_pattern	length=$200. label="d•¡ƒpƒ^[ƒ“";
+			attrib _dup_pattern	length=$200. label="é‡è¤‡ãƒ‘ã‚¿ãƒ¼ãƒ³";
 			set 
 				_nodup_check_sabun_var_freq(in=in0 obs=1)
 				_nodup_check_sabun_var_freq
 				end = eof
 			;
 			if in0 then do;
-				_dup_pattern = "d•¡‚È‚µ";
+				_dup_pattern = "é‡è¤‡ãªã—";
 				_sabun_var = "";
 				count = sum(&num_indata., -&num_dupdata.);
 				percent = count / &num_indata. * 100;
 			end;
 			else do;
-				_dup_pattern = cats("d•¡ƒpƒ^[ƒ“", _n_ - 1);
+				_dup_pattern = cats("é‡è¤‡ãƒ‘ã‚¿ãƒ¼ãƒ³", _n_ - 1);
 				percent = count / &num_indata. * 100;
 			end;
 
 			output;
 
-			/*‡ŒvƒXƒe[ƒgƒƒ“ƒg*/
+			/*åˆè¨ˆã‚¹ãƒ†ãƒ¼ãƒˆãƒ¡ãƒ³ãƒˆ*/
 			_sum_count + count;
 			_sum_percent + percent;
 			
 			if eof then do;
-				_dup_pattern = "‡Œv";
+				_dup_pattern = "åˆè¨ˆ";
 				_sabun_var = "";
-				if _sum_count ne &num_indata. then put "WARNING:‡Œv“x”‚ª“ü—Íƒf[ƒ^‚ÌƒŒƒR[ƒh”‚Æ•sˆê’v"(_sum_count)(=);
+				if _sum_count ne &num_indata. then put "WARNING:åˆè¨ˆåº¦æ•°ãŒå…¥åŠ›ãƒ‡ãƒ¼ã‚¿ã®ãƒ¬ã‚³ãƒ¼ãƒ‰æ•°ã¨ä¸ä¸€è‡´"(_sum_count)(=);
 				count = _sum_count;
-				if not(99.99 < _sum_percent < 100.01) then put "WARNING:‡Œv‚ª100ƒp[ƒZƒ“ƒg‚É‚È‚Á‚Ä‚¢‚È‚¢" (_sum_percent)(=);
+				if not(99.99 < _sum_percent < 100.01) then put "WARNING:åˆè¨ˆãŒ100ãƒ‘ãƒ¼ã‚»ãƒ³ãƒˆã«ãªã£ã¦ã„ãªã„" (_sum_percent)(=);
 				percent = _sum_percent;
 				output;
 			end;
@@ -231,78 +231,78 @@
 
 	%end;
 	%else %do;
-		%put NOTE:d•¡ƒf[ƒ^‚Í‘¶İ‚µ‚Ü‚¹‚ñB;
+		%put NOTE:é‡è¤‡ãƒ‡ãƒ¼ã‚¿ã¯å­˜åœ¨ã—ã¾ã›ã‚“ã€‚;
 		data _nodup_check_data_all_fin;
 			attrib
-				_dup_key	length=$10000.	label="d•¡ƒL["
-				_sabun_var	length=$20.		label="ƒRƒƒ“ƒg"
+				_dup_key	length=$10000.	label="é‡è¤‡ã‚­ãƒ¼"
+				_sabun_var	length=$20.	label="ã‚³ãƒ¡ãƒ³ãƒˆ"
 			;
 
-			/*ƒ`ƒFƒbƒNƒL[‚Ìæ“¾*/
+			/*ãƒã‚§ãƒƒã‚¯ã‚­ãƒ¼ã®å–å¾—*/
 			_dup_key = strip("&key.");
 
-			/*ƒRƒƒ“ƒg*/
-			_sabun_var = "d•¡ƒŒƒR[ƒh‚È‚µ";
+			/*ã‚³ãƒ¡ãƒ³ãƒˆ*/
+			_sabun_var = "é‡è¤‡ãƒ¬ã‚³ãƒ¼ãƒ‰ãªã—";
 		run;
 
 		data _nodup_check_sabun_var_freq_fin;
 			attrib 
-				_dup_pattern	length=$200.	label="d•¡ƒpƒ^[ƒ“"
-				count			length=8.		label="“x”"
-				percent			length=8.		label="‡Œv“x”‚Ìƒp[ƒZƒ“ƒg"
+				_dup_pattern	length=$200.	label="é‡è¤‡ãƒ‘ã‚¿ãƒ¼ãƒ³"
+				count			length=8.		label="åº¦æ•°"
+				percent			length=8.		label="åˆè¨ˆåº¦æ•°ã®ãƒ‘ãƒ¼ã‚»ãƒ³ãƒˆ"
 
 			;
-			_dup_pattern = "d•¡‚È‚µ";
+			_dup_pattern = "é‡è¤‡ãªã—";
 			count = &num_indata.;
 			percent = 100;
 		run;
 
 	%end;
 
-	/*d•¡’²¸‘ÎÛ*/
+	/*é‡è¤‡èª¿æŸ»å¯¾è±¡*/
 	data _nodup_check_list;
 		attrib
-			komoku	length=$100.	label="€–Ú"
-			naiyo	length=$1000.	label="“à—e"
+			komoku	length=$100.	label="é …ç›®"
+			naiyo	length=$1000.	label="å†…å®¹"
 		;
-		komoku	= "ƒ‰ƒCƒuƒ‰ƒŠQÆæ";
+		komoku	= "ãƒ©ã‚¤ãƒ–ãƒ©ãƒªå‚ç…§å…ˆ";
 		naiyo	= "%superq(lib)";
 		output;
 
-		komoku	= "ƒe[ƒuƒ‹–¼";
+		komoku	= "ãƒ†ãƒ¼ãƒ–ãƒ«å";
 		naiyo	= "%superq(in)";
 		output;
 
-		komoku	= "’²¸ƒL[";
+		komoku	= "èª¿æŸ»ã‚­ãƒ¼";
 		naiyo	= "%superq(key)";
 		output;
 	run;
 
-	/*HTMLo—Í*/
+	/*HTMLå‡ºåŠ›*/
 	ods html path = "%superq(path)" file ="%superq(name).html";
-	title "d•¡’²¸";
+	title "é‡è¤‡èª¿æŸ»";
 	proc print data = _nodup_check_list label noobs;
 	run;
-	title "d•¡ƒpƒ^[ƒ“•ª•z";
+	title "é‡è¤‡ãƒ‘ã‚¿ãƒ¼ãƒ³åˆ†å¸ƒ";
 	proc print data = _nodup_check_sabun_var_freq_fin label noobs;
 	run;
 	ods html close;
 	title "";
-	/*ƒGƒNƒZƒ‹o—Í*/
+	/*ã‚¨ã‚¯ã‚»ãƒ«å‡ºåŠ›*/
 	ods excel file="%superq(path)\%superq(name).xlsx" 	options(
-											sheet_name		="d•¡ƒpƒ^[ƒ“•ª•z"	/*ƒV[ƒg–¼*/
-											sheet_interval	="none"				/*PROC‚²‚Æ‚ÉƒV[ƒg‚ğ•ª‚¯‚é*/
-											start_at		="2,2"				/*ŠJns—ñ*/
-											autofilter		="all"				/*ƒI[ƒgƒtƒBƒ‹ƒ^*/
-											embedded_titles	="off"				/*ƒ^ƒCƒgƒ‹‚È‚µ*/
-										);
+									sheet_name		="é‡è¤‡ãƒ‘ã‚¿ãƒ¼ãƒ³åˆ†å¸ƒ"	/*ã‚·ãƒ¼ãƒˆå*/
+									sheet_interval	="none"				/*PROCã”ã¨ã«ã‚·ãƒ¼ãƒˆã‚’åˆ†ã‘ã‚‹*/
+									start_at		="2,2"				/*é–‹å§‹è¡Œåˆ—*/
+									autofilter		="all"				/*ã‚ªãƒ¼ãƒˆãƒ•ã‚£ãƒ«ã‚¿*/
+									embedded_titles	="off"				/*ã‚¿ã‚¤ãƒˆãƒ«ãªã—*/
+									);
 	proc print data = _nodup_check_list label noobs;
 	run;
 	proc print data = _nodup_check_sabun_var_freq_fin label noobs;
 	run;
 /*
 	ods excel options(
-		sheet_name		="d•¡ƒf[ƒ^"
+		sheet_name		="é‡è¤‡ãƒ‡ãƒ¼ã‚¿"
 		sheet_interval	="proc"	
 		start_at		="1,1"	
 		autofilter		="all"	
@@ -313,15 +313,15 @@
 */
 	ods excel close;
 
-	/*d•¡ƒf[ƒ^‚ª‘½‚·‚¬‚é‚Æƒƒ‚ƒŠ•s‘«‚ğ‹N‚±‚·‚½‚ßAEXPORTƒvƒƒVƒWƒƒ‚Åo—Í‚·‚é*/
+	/*é‡è¤‡ãƒ‡ãƒ¼ã‚¿ãŒå¤šã™ãã‚‹ã¨ãƒ¡ãƒ¢ãƒªä¸è¶³ã‚’èµ·ã“ã™ãŸã‚ã€EXPORTãƒ—ãƒ­ã‚·ã‚¸ãƒ£ã§å‡ºåŠ›ã™ã‚‹*/
 	proc export data=_nodup_check_data_all_fin
 				outfile="%superq(path)\%superq(name).xlsx"
 				dbms=xlsx
 				label;
-		sheet="d•¡ƒf[ƒ^"n;
+		sheet="é‡è¤‡ãƒ‡ãƒ¼ã‚¿"n;
 	run;
 
-	/*•s—vƒf[ƒ^‚Ìíœ*/
+	/*ä¸è¦ãƒ‡ãƒ¼ã‚¿ã®å‰Šé™¤*/
 	proc datasets lib=work noprint;
 		delete _nodup_check_:;
 	quit;
@@ -331,29 +331,29 @@
 %mend nodup_check;
 
 
-/*g—p—á*/
+/*ä½¿ç”¨ä¾‹*/
 /*
 %nodup_check(
 	lib 	="C:\library",
-	in		=D_0023_01(keep=IM_TEN_CD IM_OWNER_CD IM_JIGYOSHA_NO IM_TAX_KBN),
+	in		=D_0023_01(keep=TEN_CD OWNER_CD JIGYOSHA_NO TAX_KBN),
 	key		=TEN_CD,
-	path	=C:\Users\d•¡ƒf[ƒ^,
-	name	=d•¡’²¸_D_0023_01
+	path	=C:\Users\é‡è¤‡ãƒ‡ãƒ¼ã‚¿,
+	name	=é‡è¤‡èª¿æŸ»_D_0023_01
 );
 
 %nodup_check(
-	lib	=,
-	in	= D_0030_01_INVOICE,
-	key	= TEN_CD KEIYAK_SDATE KEIYAK_EDATE,
-	path= C:\Users\d•¡ƒf[ƒ^,
-	name= d•¡’²¸_D_0030_01_INVOICE
+	lib		=,
+	in		= D_0030_01_INVOICE,
+	key		= TEN_CD KEIYAK_SDATE KEIYAK_EDATE,
+	path	= C:\Users\é‡è¤‡ãƒ‡ãƒ¼ã‚¿,
+	name	= é‡è¤‡èª¿æŸ»_D_0030_01_INVOICE
 );
 
 %nodup_check(
-	lib	=,
-	in	= D_0030_01_INVOICE_NODUP,
-	key	= TEN_CD KEIYAK_SDATE KEIYAK_EDATE,
-	path= C:\Users\d•¡ƒf[ƒ^,
-	name= d•¡’²¸_D_0030_01_INVOICE_NODUP
+	lib		=,
+	in		= D_0030_01_INVOICE_NODUP,
+	key		= TEN_CD KEIYAK_SDATE KEIYAK_EDATE,
+	path	= C:\Users\é‡è¤‡ãƒ‡ãƒ¼ã‚¿,
+	name	= é‡è¤‡èª¿æŸ»_D_0030_01_INVOICE_NODUP
 );
 */
