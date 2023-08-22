@@ -1,0 +1,405 @@
+Function FC_ArrangeScatterLabel(chartName As String, Optional book As String, _
+                                Optional sheet As String, Optional line As Boolean = False, _
+                                Optional argArea As Boolean = False)
+'散布図の重なり合うデータラベルを調整する
+'chartName  :グラフ名を指定する。省略不可
+'book       :ワークブック名を指定する。省略した場合はアクティブブックを対象とする。
+'sheet      :シート名を指定する。省略した場合はアクティブシートを対象とする。
+'line       :データラベルをずらした際に、プロットとデータラベルを引き出し線で結ぶ場合はTrueにする。既定値=False。
+'argArea    :プロットがプロットエリア外に出てしまったとき、プロットエリアを広げる場合はTrueにする。既定値=False。
+
+    Dim wb As Workbook
+    Dim ws As Worksheet
+    
+    Dim myChart As ChartObject
+    Dim myGraph As chart        'ChartObjectオブジェクト(箱)の内側のChartオブジェクト(グラフ)
+    Dim myAxes As Axes          '軸オブジェクト
+    
+    Dim n_keiretsu As Long      '系列数
+    Dim n_yoso() As Variant     '系列内の要素数
+    
+    Dim orgRect() As Variant    'プロットの位置情報
+    Dim newRect() As Variant    'データラベルの新しい位置情報
+    Dim dataValue() As Variant  '各プロットのx値、y値
+    
+    Dim dl1 As DataLabel
+    Dim dl2 As DataLabel
+    
+    Dim xMax#, xMin#, yMax#, yMin#  'x軸、y軸の最大値・最小値
+    Dim xMajorUnit#, yMajorUnit#    'x軸、y軸の軸単位
+    Dim xCenter#, yCenter#          'x軸とy軸が交わる中心値
+    Dim xTaisyo As Boolean          'x軸中心値が最大値と最小値の中心であればTrue
+    Dim yTaisyo As Boolean          'y軸中心値が最大値と最小値の中心であればTrue
+    
+    Dim i&, j&, k&, i2&, j2&, cnt_loop&
+    Dim diff_yoko#, diff_tate#
+    
+    Const diff_rate# = 0.2      'ラベルを少しずつずらす場合はdiff_rateを小さくする。重なりが解消されない場合は、値を大きくすると解消され易くなるが、粗い仕上がりになる場合がある。
+    Const yohaku# = 10          'ラベルを少しずつずらす場合はyohakuを小さくする。重なりが解消されない場合は、値を大きくすると解消され易くなるが、粗い仕上がりになる場合がある。
+    Const loopmax& = 30         '重なりが解消するまでの最大ループ回数。重なりが解消されない場合は、値を大きくすると解消され易くなる。
+    
+    '対象ブックをセット
+    If book <> "" Then
+        Set wb = Workbooks(book)
+    Else
+        Set wb = ActiveWorkbook
+    End If
+    
+    '対象シートをセット
+    If sheet <> "" Then
+        Set ws = wb.Worksheets(sheet)
+    Else
+        Set ws = wb.ActiveSheet
+    End If
+    
+    'Chartオブジェクトをセット
+    Set myChart = ws.ChartObjects(chartName)
+    Set myGraph = myChart.chart
+    Set myAxes = myGraph.Axes
+    
+    'グラフを非アクティブ化
+    myGraph.Deselect
+    
+    '系列数の取得
+    n_keiretsu = myGraph.SeriesCollection.Count
+    
+    '系列内の要素数の取得
+    ReDim n_yoso(1 To n_keiretsu)
+    For i = 1 To n_keiretsu
+        n_yoso(i) = myGraph.SeriesCollection(i).Points.Count
+    Next i
+    
+    '動的配列を定義
+    ReDim orgRect(1 To n_keiretsu, 1 To Application.WorksheetFunction.Max(n_yoso))
+    ReDim newRect(1 To n_keiretsu, 1 To Application.WorksheetFunction.Max(n_yoso))
+    ReDim dataValue(1 To n_keiretsu, 1 To Application.WorksheetFunction.Max(n_yoso))
+    
+    'x軸、y軸の最大値・最小値の取得
+    xMax = myAxes.Item(xlCategory).MaximumScale
+    xMin = myAxes.Item(xlCategory).MinimumScale
+    yMax = myAxes.Item(xlValue).MaximumScale
+    yMin = myAxes.Item(xlValue).MinimumScale
+    
+    'x軸、y軸の軸単位の取得
+    xMajorUnit = myAxes.Item(xlCategory).MajorUnit
+    yMajorUnit = myAxes.Item(xlValue).MajorUnit
+    
+    'x軸とy軸が交わる中心値を取得
+    xCenter = myAxes.Item(xlCategory).CrossesAt
+    yCenter = myAxes.Item(xlValue).CrossesAt
+
+    '軸の対象フラグを取得
+    If WorksheetFunction.Sum(xMax, xMin) / 2 = xCenter Then xTaisyo = True
+    If WorksheetFunction.Sum(yMax, yMin) / 2 = yCenter Then yTaisyo = True
+    
+    'ChartObjectオブジェクト(箱)をアクティブ
+    myChart.Select
+
+    'データ値(x値(0),y値(1))を配列に格納
+	For i = 1 To n_keiretsu
+	    For j = 1 To n_yoso(i)
+	        dataValue(i, j) = Array(myGraph.SeriesCollection(i).XValues, myGraph.SeriesCollection(i).Values)
+	        dataValue(i, j) = Array(dataValue(i, j)(0)(j), dataValue(i, j)(1)(j))
+	    Next j
+	Next i
+    
+    'プロットがプロットエリア外に出た場合に、プロットエリアを広げる処理
+    If argArea = True Then
+    
+        '広げる前に、軸の自動調整をオフにしておかないと、広げた後に不自然になる可能性がある
+        myAxes.Item(xlCategory).MaximumScaleIsAuto = False
+        myAxes.Item(xlCategory).MinimumScaleIsAuto = False
+        myAxes.Item(xlValue).MaximumScaleIsAuto = False
+        myAxes.Item(xlValue).MinimumScaleIsAuto = False
+        myAxes.Item(xlCategory).MinorUnitIsAuto = False
+        myAxes.Item(xlCategory).MajorUnitIsAuto = False
+        myAxes.Item(xlCategory).MinorUnitIsAuto = False
+        myAxes.Item(xlValue).MajorUnitIsAuto = False
+        myAxes.Item(xlValue).MinorUnitIsAuto = False
+        
+        For i = 1 To n_keiretsu
+            For j = 1 To n_yoso(i)
+            
+                'x軸、y軸の最大値・最小値の取得
+                xMax = myAxes.Item(xlCategory).MaximumScale
+                xMin = myAxes.Item(xlCategory).MinimumScale
+                yMax = myAxes.Item(xlValue).MaximumScale
+                yMin = myAxes.Item(xlValue).MinimumScale
+            
+                '中心値が最大値と最小値の中心であれば、中心値を対象に最大値と最小値を同じだけ広げる
+                If xTaisyo = True Then
+                    If xMax < dataValue(i, j)(0) Then
+                        myAxes.Item(xlCategory).MaximumScale = xMax + Int((dataValue(i, j)(0) - xMax) / xMajorUnit + 1) * xMajorUnit
+                        myAxes.Item(xlCategory).MinimumScale = xMin - Int((dataValue(i, j)(0) - xMax) / xMajorUnit + 1) * xMajorUnit
+                    ElseIf xMin > dataValue(i, j)(0) Then
+                        myAxes.Item(xlCategory).MaximumScale = xMax + Int((xMin - dataValue(i, j)(0)) / xMajorUnit + 1) * xMajorUnit
+                        myAxes.Item(xlCategory).MinimumScale = xMin - Int((xMin - dataValue(i, j)(0)) / xMajorUnit + 1) * xMajorUnit
+                    End If
+                Else
+                    If xMax < dataValue(i, j)(0) Then
+                        myAxes.Item(xlCategory).MaximumScale = xMax + Int((dataValue(i, j)(0) - xMax) / xMajorUnit + 1) * xMajorUnit
+                    ElseIf xMin > dataValue(i, j)(0) Then
+                        myAxes.Item(xlCategory).MinimumScale = xMin - Int((xMin - dataValue(i, j)(0)) / xMajorUnit + 1) * xMajorUnit
+                    End If
+                End If
+                
+                
+                If yTaisyo = True Then
+                    If yMax < dataValue(i, j)(1) Then
+                        myAxes.Item(xlValue).MaximumScale = yMax + Int((dataValue(i, j)(1) - yMax) / yMajorUnit + 1) * yMajorUnit
+                        myAxes.Item(xlValue).MinimumScale = yMin - Int((dataValue(i, j)(1) - yMax) / yMajorUnit + 1) * yMajorUnit
+                    ElseIf yMin > dataValue(i, j)(1) Then
+                        myAxes.Item(xlValue).MaximumScale = yMax + Int((yMin - dataValue(i, j)(1)) / yMajorUnit + 1) * yMajorUnit
+                        myAxes.Item(xlValue).MinimumScale = yMin - Int((yMin - dataValue(i, j)(1)) / yMajorUnit + 1) * yMajorUnit
+                    End If
+                Else
+                    If yMax < dataValue(i, j)(1) Then
+                        myAxes.Item(xlValue).MaximumScale = yMax + Int((dataValue(i, j)(1) - yMax) / yMajorUnit + 1) * yMajorUnit
+                    ElseIf yMin > dataValue(i, j)(1) Then
+                        myAxes.Item(xlValue).MinimumScale = yMin - Int((yMin - dataValue(i, j)(1)) / yMajorUnit + 1) * yMajorUnit
+                    End If
+                End If
+            
+            Next j
+        Next i
+    
+    End If
+    
+    'データラベルを中央寄せ
+    myGraph.SetElement msoElementDataLabelCenter
+
+    '実際の値からラベルをずらした時のために、引き出し線を表示
+    For i = 1 To n_keiretsu
+        With myGraph.SeriesCollection(i)
+            .HasLeaderLines = line
+        End With
+    Next i
+
+    'ChartObjectオブジェクト(箱)をアクティブ
+    myChart.Select
+
+	'各配列への値の格納
+    For i = 1 To n_keiretsu
+        For j = 1 To n_yoso(i)
+            Set dl1 = myGraph.SeriesCollection(i).Points(j).DataLabel
+            
+            '調整前の位置情報(表示値(0), 左端(1), 右端(2), 上端(3), 下端(4), 横中心(5), 縦中心(6))を配列に格納
+            orgRect(i, j) = Array(dl1.text, dl1.Left, dl1.Left + dl1.Width, dl1.Top, dl1.Top + dl1.Height, _
+                                  dl1.Left + dl1.Width / 2, dl1.Top + dl1.Height / 2)
+                                  
+            '後続処理のために、調整後の配列も用意しておく
+            newRect(i, j) = Array(dl1.text, dl1.Left, dl1.Left + dl1.Width, dl1.Top, dl1.Top + dl1.Height, _
+                                  dl1.Left + dl1.Width / 2, dl1.Top + dl1.Height / 2)
+        Next j
+    Next i
+
+    'ずらしカウントk=0になるまでループ
+    Do
+        '予期せぬ無限ループを防ぐための処理
+        If cnt_loop = loopmax Then
+            Debug.Print "無限ループに入る可能性があるので" & loopmax & "回目でUntilループ終了"
+            Exit Do
+        End If
+
+        'ループ回数をカウント
+        cnt_loop = cnt_loop + 1
+
+        'ずらしカウント初期化
+        k = 0
+
+        '位置情報をずらす
+        For i = 1 To n_keiretsu
+            For j = 1 To n_yoso(i)
+
+                Set dl1 = myGraph.SeriesCollection(i).Points(j).DataLabel
+
+                For i2 = 1 To n_keiretsu
+                    For j2 = 1 To n_yoso(i2)
+
+                        '重なり幅の初期化
+                        diff_yoko = 0
+                        diff_tate = 0
+
+                        '①データラベル同士の重なりを調整
+                        If i <> i2 Or j <> j2 Then
+
+                            Set dl2 = myGraph.SeriesCollection(i2).Points(j2).DataLabel
+
+                            '横方向の重なり幅の算出
+                            If dl1.Left < dl2.Left Then
+                                If dl1.Left + dl1.Width > dl2.Left _
+                                And dl1.Left + dl1.Width < dl2.Left + dl2.Width Then
+                                    diff_yoko = dl1.Left + dl1.Width - dl2.Left
+                                ElseIf dl1.Left + dl1.Width >= dl2.Left + dl2.Width Then
+                                    diff_yoko = dl2.Width
+                                End If
+                            Else
+                                If dl2.Left + dl2.Width > dl1.Left _
+                                And dl2.Left + dl2.Width < dl1.Left + dl1.Width Then
+                                    diff_yoko = dl2.Left + dl2.Width - dl1.Left
+                                ElseIf dl2.Left + dl2.Width >= dl1.Left + dl1.Width Then
+                                    diff_yoko = dl1.Width
+                                End If
+                            End If
+
+                            '縦方向の重なり幅の算出
+                            If dl1.Top < dl2.Top Then
+                                If dl1.Top + dl1.Height > dl2.Top _
+                                And dl1.Top + dl1.Height < dl2.Top + dl2.Height Then
+                                    diff_tate = dl1.Top + dl1.Height - dl2.Top
+                                ElseIf dl1.Top + dl1.Height >= dl2.Top + dl2.Height Then
+                                    diff_tate = dl2.Height
+                                End If
+                            Else
+                                If dl2.Top + dl2.Height > dl1.Top _
+                                And dl2.Top + dl2.Height < dl1.Top + dl1.Height Then
+                                    diff_tate = dl2.Top + dl2.Height - dl1.Top
+                                ElseIf dl2.Top + dl2.Height >= dl1.Top + dl1.Height Then
+                                    diff_tate = dl1.Height
+                                End If
+                            End If
+
+
+                            '横方向と縦方向が重なる、つまり、重なり面積>0となる場合にずらす
+                            If diff_yoko > 0 And diff_tate > 0 Then
+
+                                'ずらしカウント
+                                k = k + 1
+                                
+                                '保守的に、実際の重なり幅に余白を加え、ずらし幅を少し増やす
+                                diff_yoko = diff_yoko + yohaku
+                                diff_tate = diff_tate + yohaku
+
+                                '重ならない位置まで横方向にずらす
+                                '中心位置が左のラベルは左へ、右のラベルは右へずらす
+                                If orgRect(i, j)(5) < orgRect(i2, j2)(5) Then
+                                    dl1.Left = dl1.Left - diff_yoko * diff_rate
+                                    dl2.Left = dl2.Left + diff_yoko * diff_rate
+                                Else
+                                    dl1.Left = dl1.Left + diff_yoko * diff_rate
+                                    dl2.Left = dl2.Left - diff_yoko * diff_rate
+                                End If
+
+                                '重ならない位置まで縦方向にずらす
+                                '中心位置が上のラベルは上へ、下のラベルは下へずらす
+                                If orgRect(i, j)(6) < orgRect(i2, j2)(6) Then
+                                    dl1.Top = dl1.Top - diff_tate * diff_rate
+                                    dl2.Top = dl2.Top + diff_tate * diff_rate
+                                Else
+                                    dl1.Top = dl1.Top + diff_tate * diff_rate
+                                    dl2.Top = dl2.Top - diff_tate * diff_rate
+                                End If
+
+                            End If
+
+                        End If
+
+
+                        '②プロットとデータラベルの重なりを調整
+                        '重なり幅の初期化
+                        diff_yoko = 0
+                        diff_tate = 0
+
+                        newRect(i, j) = Array(dl1.text, dl1.Left, dl1.Left + dl1.Width, dl1.Top, _
+                            dl1.Top + dl1.Height, dl1.Left + dl1.Width / 2, dl1.Top + dl1.Height / 2)
+
+                        '新規左端 < プロット位置 < 新規右端の場合
+                        If newRect(i, j)(1) < orgRect(i2, j2)(5) And orgRect(i2, j2)(5) < newRect(i, j)(2) Then
+
+                            '新規中心 < プロット位置の場合、データラベルを左へずらす
+                            If newRect(i, j)(5) < orgRect(i2, j2)(5) Then
+                                diff_yoko = newRect(i, j)(2) - orgRect(i2, j2)(5)
+                            Else    '新規中心 >= プロット位置の場合、データラベルを右へずらす
+                                diff_yoko = orgRect(i2, j2)(5) - newRect(i, j)(1)
+                            End If
+
+                        End If
+
+                        '新規上端 < プロット位置 < 新規下端の場合
+                        If newRect(i, j)(3) < orgRect(i2, j2)(6) And orgRect(i2, j2)(6) < newRect(i, j)(4) Then
+
+                            '新規中心 < プロット位置の場合、データラベルを上へずらす
+                            If newRect(i, j)(6) < orgRect(i2, j2)(6) Then
+                                diff_tate = newRect(i, j)(4) - orgRect(i2, j2)(6)
+                            Else    '新規中心 >= プロット位置の場合、データラベルを下へずらす
+                                diff_tate = orgRect(i2, j2)(6) - newRect(i, j)(3)
+                            End If
+
+                        End If
+
+                        'データラベルの四角形の内側にプロットが存在する場合に、データラベルを縦方向へずらす
+                        If diff_yoko > 0 And diff_tate > 0 Then
+
+                            'ずらしカウント
+                            k = k + 1
+
+                            '保守的に、実際の重なり幅に余白を加え、ずらし幅を少し増やす
+                            diff_tate = diff_tate + yohaku
+
+                            '新規中心 < プロット位置の場合、データラベルを上へずらす
+                            If newRect(i, j)(6) < orgRect(i2, j2)(6) Then
+                                dl1.Top = dl1.Top - diff_tate * diff_rate
+                            Else    '新規中心 >= プロット位置の場合、データラベルを下へずらす
+                                dl1.Top = dl1.Top + diff_tate * diff_rate
+                            End If
+
+                        End If
+        
+                    
+                        '③データラベルがプロットエリア外に出た場合の調整
+                        'プロットエリア上下外に出た場合
+                        newRect(i, j) = Array(dl1.text, dl1.Left, dl1.Left + dl1.Width, dl1.Top, _
+                            dl1.Top + dl1.Height, dl1.Left + dl1.Width / 2, dl1.Top + dl1.Height / 2)
+                            
+                        If newRect(i, j)(3) < myGraph.PlotArea.InsideTop _
+                        Or newRect(i, j)(4) > myGraph.PlotArea.InsideTop + myGraph.PlotArea.InsideHeight Then
+                        
+                            'ずらしカウント
+                            k = k + 1
+                            
+                            '一旦、上端をオリジナル位置に戻す
+                            dl1.Top = orgRect(i, j)(3)
+                            
+                            '新規中心 < プロット位置の場合、データラベルを左へずらす
+                            If newRect(i, j)(5) < orgRect(i2, j2)(5) Then
+                                dl1.Left = orgRect(i, j)(5) - dl1.Width - yohaku
+                            Else    '新規中心 >= プロット位置の場合、データラベルを右へずらす
+                                dl1.Left = orgRect(i, j)(5) + yohaku
+                            End If
+                        End If
+                        
+                        'プロットエリア左外に出た場合
+                        newRect(i, j) = Array(dl1.text, dl1.Left, dl1.Left + dl1.Width, dl1.Top, _
+                            dl1.Top + dl1.Height, dl1.Left + dl1.Width / 2, dl1.Top + dl1.Height / 2)
+                            
+                        If newRect(i, j)(1) < myGraph.PlotArea.InsideLeft Then
+                        
+                            'ずらしカウント
+                            k = k + 1
+                            
+                            dl1.Left = orgRect(i, j)(5) + yohaku
+                        End If
+                        
+                        'プロットエリア右外に出た場合
+                        newRect(i, j) = Array(dl1.text, dl1.Left, dl1.Left + dl1.Width, _
+                            dl1.Top, dl1.Top + dl1.Height, dl1.Left + dl1.Width / 2, dl1.Top + dl1.Height / 2)
+                            
+                        If newRect(i, j)(2) > myGraph.PlotArea.InsideLeft + myGraph.PlotArea.InsideWidth Then
+                        
+                            'ずらしカウント
+                            k = k + 1
+                            
+                            dl1.Left = orgRect(i, j)(5) - dl1.Width - yohaku
+                        End If
+
+                    Next j2
+                Next i2
+            Next j
+        Next i
+
+    Loop Until k = 0
+    
+    'A1セルをアクティブにして終了
+    Application.Goto Reference:=ws.Range("A1"), Scroll:=True
+    
+End Function
